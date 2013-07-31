@@ -57,7 +57,7 @@ class Mbox
 			raise ArgumentError, 'I do not know what to do.'
 		end
 
-		@options = { separator: /^From [^\s]+ .{24}/ }.merge(options)
+		@options = { separator: /^From [^\s]+  ?\w{3}(,| )\w{3} (\d| )\d \d{2}:\d{2}:\d{2} \d{4}/ }.merge(options)
 	end
 
 	def close
@@ -93,7 +93,77 @@ class Mbox
 			end
 		}
 	end
+	
+	def each_between_indeces (beginning,num,opts = {})
+		seek beginning
+		current = 0
+		lock {
+			while mail = Mail.parse(@input, options.merge(opts))
+				current += 1
+				if current > num
+					break
+				end
+				yield mail
+			end
+		}
+	end
 
+	def until (date,opts = {})
+		@input.seek 0
+
+		lock {
+			while mail = Mail.parse(@input, options.merge(opts))
+				mail_date = mail.ruby_date
+				unless mail_date
+					yield mail
+					next
+				end
+				if mail_date > date
+					break
+				end
+				yield mail
+			end
+		}
+	end
+	
+	def since (date, opts = {})
+		@input.seek 0
+
+		lock {
+			begin_yield = false
+			while mail = Mail.parse(@input, options.merge(opts))
+				if begin_yield
+					yield mail
+					next
+				end
+				mail_date = mail.ruby_date
+				next unless mail_date
+				if mail_date >= date
+				    begin_yield = true
+				    yield mail
+				end
+			end
+		}
+	end
+
+	def between (after,before, opts = {})
+		@input.seek 0
+
+		lock {
+			begin_yield = false
+			while mail = Mail.parse(@input, options.merge(opts))
+				mail_date = mail.ruby_date
+				next unless mail_date
+				if mail_date > before
+					break
+				end
+				if mail_date >= after
+					yield mail
+				end
+			end
+		}
+	end
+	
 	def [] (index, opts = {})
 		lock {
 			seek index
@@ -102,7 +172,13 @@ class Mbox
 				raise IndexError, "#{index} is out of range"
 			end
 
-			Mail.parse(@input, options.merge(opts))
+			res = @input.readline
+			while line = @input.readline rescue nil
+				if line.match(options[:separator]) || @input.eof?
+					return res
+				end
+				res << line
+			end
 		}
 	end
 
@@ -115,7 +191,7 @@ class Mbox
 		index  = -1
 
 		while line = @input.readline rescue nil
-			if line.match(options[:separator]) && last.chomp.empty?
+			if line.match(options[:separator])
 				index += 1
 
 				if index >= to
@@ -141,7 +217,7 @@ class Mbox
 			until @input.eof?
 				line = @input.readline
 
-				if line.match(options[:separator]) && last.chomp.empty?
+				if line.match(options[:separator])
 					length += 1
 				end
 

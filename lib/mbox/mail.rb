@@ -48,13 +48,7 @@ class Mail
 			break if line.strip.empty?
 
 			current << line
-			if line[0..12] == "Delivered-To:"
-				metadata.parse_to line
-				next
-			end
-			if line[0..7] == "Subject:"
-				metadata.parse_subject line
-			end
+			
 		end until input.eof? || (line = input.readline).match(options[:separator])
 		headers.parse(current)
 
@@ -92,6 +86,22 @@ class Mail
 	
 	def date
 		metadata.from.first.date
+	end
+	
+	def ruby_date
+		date_string = self.headers[:date]
+		if date_string
+			mail_date = nil
+			mail_date = Date.strptime(self.headers[:date], "%a, %d %b %Y %H:%M:%S %z") rescue mail_date
+			return mail_date if mail_date
+			mail_date = Date.strptime(self.headers[:date], "%d %b %Y %H:%M:%S %z") rescue mail_date
+			return mail_date if mail_date
+			mail_date = Date.strptime(self.headers[:date], "%a, %d %b %Y %H:%M:%S") rescue mail_date
+			return mail_date if mail_date
+			mail_date = Date.strptime(self.headers[:date], "%a, %d %b %Y %H:%M %z") rescue mail_date
+			return mail_date
+		end
+		return nil
 	end
 	
 	def to
