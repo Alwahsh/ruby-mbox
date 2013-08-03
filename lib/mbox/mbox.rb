@@ -42,7 +42,11 @@ class Mbox
 	def self.finalizer (io)
 		proc { io.close }
 	end
-
+	
+	def self.separator
+	  return /^From [^\s]+  ?\w{3}(,| )\w{3} (\d| )\d \d{2}:\d{2}:\d{2} \d{4}/
+	end
+	
 	include Enumerable
 
 	attr_reader   :options
@@ -57,7 +61,7 @@ class Mbox
 			raise ArgumentError, 'I do not know what to do.'
 		end
 
-		@options = { separator: /^From [^\s]+  ?\w{3}(,| )\w{3} (\d| )\d \d{2}:\d{2}:\d{2} \d{4}/ }.merge(options)
+		@options = { separator: Mbox.separator }.merge(options)
 	end
 
 	def close
@@ -90,6 +94,21 @@ class Mbox
 		lock {
 			while mail = Mail.parse(@input, options.merge(opts))
 				yield mail
+			end
+		}
+	end
+	
+	def each_raw_message (opts = {})
+		@input.seek 0
+
+		lock {
+			res = @input.readline
+			while line = @input.readline rescue nil
+				if line.match(options[:separator]) || @input.eof?
+					yield res
+					res = ""
+				end
+				res << line
 			end
 		}
 	end
@@ -241,4 +260,5 @@ class Mbox
 	def inspect
 		"#<Mbox:#{name} length=#{length}>"
 	end
+	
 end

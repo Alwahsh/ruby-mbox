@@ -72,6 +72,7 @@ class Mail
 		Mail.new(metadata, headers, content)
 	end
 
+	
 	attr_reader :metadata, :headers, :content
 
 	def initialize (metadata, headers, content)
@@ -89,9 +90,9 @@ class Mail
 	end
 	
 	def ruby_date
-	  ahmed = false
 		date_string = self.headers[:date]
 		date_string = self.headers[:resent_date] unless date_string
+		date_string = self.date unless date_string
 		if date_string
 			mail_date = nil
 			mail_date = Date.strptime(date_string, "%a, %d %b %y %H:%M:%S %z") rescue mail_date
@@ -110,13 +111,6 @@ class Mail
 		return nil
 	end
 	
-	def to
-		metadata.to.first
-	end
-	
-	def subject
-		metadata.subject.first
-	end
 	
 	def save_to (path)
 		File.open(path, 'w') {|f|
