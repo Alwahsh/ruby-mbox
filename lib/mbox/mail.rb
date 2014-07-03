@@ -95,17 +95,17 @@ class Mail
 		date_string = self.date unless date_string
 		if date_string
 			mail_date = nil
-			mail_date = Date.strptime(date_string, "%a, %d %b %y %H:%M:%S %z") rescue mail_date
+			mail_date = DateTime.strptime(date_string, "%a, %d %b %y %H:%M:%S %z") rescue mail_date
 			return mail_date if mail_date
-			mail_date = Date.strptime(date_string, "%a, %d %b %Y %H:%M:%S %z") rescue mail_date
+			mail_date = DateTime.strptime(date_string, "%a, %d %b %Y %H:%M:%S %z") rescue mail_date
 			return mail_date if mail_date
-			mail_date = Date.strptime(date_string, "%d %b %Y %H:%M:%S %z") rescue mail_date
+			mail_date = DateTime.strptime(date_string, "%d %b %Y %H:%M:%S %z") rescue mail_date
 			return mail_date if mail_date
-			mail_date = Date.strptime(date_string, "%a, %d %b %Y %H:%M:%S") rescue mail_date
+			mail_date = DateTime.strptime(date_string, "%a, %d %b %Y %H:%M:%S") rescue mail_date
 			return mail_date if mail_date
-			mail_date = Date.strptime(date_string, "%a, %d %b %Y %H:%M %z") rescue mail_date
+			mail_date = DateTime.strptime(date_string, "%a, %d %b %Y %H:%M %z") rescue mail_date
 			return mail_date if mail_date
-			mail_date = Date.strptime(date_string, "%a %b %d %H:%M:%S %Y") rescue mail_date
+			mail_date = DateTime.strptime(date_string, "%a %b %d %H:%M:%S %Y") rescue mail_date
 			return mail_date
 		end
 		return nil
